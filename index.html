@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Postęp</title>
+
+<!-- PWA / iOS home screen support -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#07070a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Postęp">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-heading">
+      <h1 id="dateHeading">Dziś</h1>
+      <span class="eyebrow" id="dateSubheading"></span>
+    </div>
+    <div class="ring" id="dayRing" aria-label="Postęp dnia">
+      <svg viewBox="0 0 40 40">
+        <circle class="ring-bg" cx="20" cy="20" r="17"></circle>
+        <circle class="ring-fg" id="dayRingFg" cx="20" cy="20" r="17"></circle>
+      </svg>
+      <span id="dayRingLabel" class="mono">0%</span>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- DZIŚ -->
+  <section class="view" id="view-today">
+    <div class="card">
+      <h2 class="card-title">Nastrój</h2>
+      <div class="mood-row" id="moodRow"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Zarobki dziś</h2>
+      <div class="earnings-row">
+        <input type="number" id="earningsInput" placeholder="0" min="0" inputmode="numeric">
+        <span class="eyebrow">ZŁ</span>
+      </div>
+    </div>
+
+    <div class="card cat-card" data-cat="health">
+      <div class="cat-head">
+        <h2 class="card-title cat-title">Zdrowie</h2>
+        <div class="ring cat-ring" id="ring-health">
+          <svg viewBox="0 0 40 40">
+            <circle class="ring-bg" cx="20" cy="20" r="17"></circle>
+            <circle class="ring-fg" id="ringFg-health" cx="20" cy="20" r="17"></circle>
+          </svg>
+          <span class="mono" id="ringLabel-health">0%</span>
+        </div>
+      </div>
+      <ul class="habit-list" id="habitList-health"></ul>
+    </div>
+
+    <div class="card cat-card" data-cat="growth">
+      <div class="cat-head">
+        <h2 class="card-title cat-title">Praca i rozwój</h2>
+        <div class="ring cat-ring" id="ring-growth">
+          <svg viewBox="0 0 40 40">
+            <circle class="ring-bg" cx="20" cy="20" r="17"></circle>
+            <circle class="ring-fg" id="ringFg-growth" cx="20" cy="20" r="17"></circle>
+          </svg>
+          <span class="mono" id="ringLabel-growth">0%</span>
+        </div>
+      </div>
+      <ul class="habit-list" id="habitList-growth"></ul>
+    </div>
+
+    <p class="empty-hint" id="habitEmptyHint" hidden>Brak nawyków — dodaj je w Ustawieniach.</p>
+
+    <div class="card">
+      <h2 class="card-title">Zadania</h2>
+      <form id="taskForm" class="task-form">
+        <input type="text" id="taskInput" placeholder="Dodaj zadanie…" autocomplete="off" maxlength="140">
+        <button type="submit" aria-label="Dodaj">+</button>
+      </form>
+      <ul class="task-list" id="taskList"></ul>
+    </div>
+  </section>
+
+  <!-- TYDZIEŃ -->
+  <section class="view" id="view-week" hidden>
+    <div class="card week-nav">
+      <button id="weekPrev" class="icon-btn" aria-label="Poprzedni tydzień">‹</button>
+      <span id="weekLabel" class="mono"></span>
+      <button id="weekNext" class="icon-btn" aria-label="Następny tydzień">›</button>
+    </div>
+    <div class="card">
+      <div class="week-grid" id="weekGrid"></div>
+    </div>
+  </section>
+
+  <!-- STATYSTYKI -->
+  <section class="view" id="view-stats" hidden>
+    <div class="card">
+      <h2 class="card-title">Książki</h2>
+      <div class="stat-box">
+        <div class="num" id="booksReadCount">0</div>
+        <div class="lbl">przeczytanych książek</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Passy (streaki)</h2>
+      <ul class="streak-list" id="streakList"></ul>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Ostatnie 30 dni</h2>
+      <div class="heatmap" id="heatmap"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Zarobki — ostatnie 14 dni</h2>
+      <svg id="earningsChart" class="chart-svg" viewBox="0 0 336 120"></svg>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num mono" id="earningsSum">0 zł</div><div class="lbl">suma / 14 dni</div></div>
+        <div class="stat-box"><div class="num mono" id="earningsAvg">0 zł</div><div class="lbl">śr. dziennie</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Podsumowanie</h2>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <div class="card" id="bookCard">
+      <h2 class="card-title">Aktualna książka</h2>
+
+      <form id="bookSetupForm" class="habit-form">
+        <div class="habit-form-row">
+          <input type="text" id="bookTitleInput" placeholder="Tytuł książki…" maxlength="80" autocomplete="off">
+        </div>
+        <div class="habit-form-row">
+          <input type="number" id="bookPagesInput" placeholder="Liczba stron" min="1" inputmode="numeric">
+          <button type="submit">Zacznij</button>
+        </div>
+      </form>
+
+      <div id="bookActive">
+        <div class="row-between">
+          <span class="book-title" id="bookTitleDisplay"></span>
+          <button type="button" class="link-btn" id="bookResetBtn">Nowa</button>
+        </div>
+        <div class="progress-bar"><div class="progress-fill gold" id="bookProgressFill"></div></div>
+        <div class="progress-meta mono" id="bookProgressLabel"></div>
+        <form id="bookPagesForm" class="task-form">
+          <input type="number" id="bookPagesToday" placeholder="Stron przeczytanych dziś…" min="1" inputmode="numeric">
+          <button type="submit">+</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- USTAWIENIA -->
+  <section class="view" id="view-settings" hidden>
+    <div class="card">
+      <h2 class="card-title">Twoje nawyki</h2>
+      <ul class="habit-edit-list" id="habitEditList"></ul>
+      <form id="habitForm" class="habit-form">
+        <div class="habit-form-row">
+          <input type="text" id="habitEmojiInput" placeholder="🙂" maxlength="4" class="emoji-input" autocomplete="off">
+          <input type="text" id="habitNameInput" placeholder="Nazwa nawyku…" maxlength="60" autocomplete="off">
+        </div>
+        <div class="habit-form-row">
+          <select id="habitCategoryInput" class="cat-select">
+            <option value="health">Zdrowie</option>
+            <option value="growth">Praca i rozwój</option>
+          </select>
+          <button type="submit">Dodaj</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Dane</h2>
+      <p class="settings-hint">Dane są zapisane wyłącznie lokalnie na tym urządzeniu. Rób kopie zapasowe regularnie.</p>
+      <div class="settings-actions">
+        <button id="exportBtn" class="btn">Eksportuj kopię zapasową</button>
+        <button id="importBtn" class="btn">Importuj kopię zapasową</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+        <button id="resetBtn" class="btn btn-danger">Wyczyść wszystkie dane</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-view="today">
+    <span class="tab-icon">●</span><span>Dziś</span>
+  </button>
+  <button class="tab-btn" data-view="week">
+    <span class="tab-icon">▦</span><span>Tydzień</span>
+  </button>
+  <button class="tab-btn" data-view="stats">
+    <span class="tab-icon">▲</span><span>Statystyki</span>
+  </button>
+  <button class="tab-btn" data-view="settings">
+    <span class="tab-icon">⚙</span><span>Ustawienia</span>
+  </button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
