@@ -9,16 +9,18 @@ const CATEGORIES = [
 ];
 
 const DEFAULT_HABITS = [
-  { id: 'h1', emoji: '🏋️', name: 'Trening', category: 'health' },
+  { id: 'h1', emoji: '⏰', name: 'Wstanie przed 7', category: 'health' },
   { id: 'h2', emoji: '💊', name: 'Suplementy', category: 'health' },
   { id: 'h3', emoji: '🧊', name: 'Zimny prysznic', category: 'health' },
-  { id: 'h4', emoji: '🚶', name: '10k kroków / rower', category: 'health' },
-  { id: 'h5', emoji: '🧠', name: 'Nauka / rozwój', category: 'growth' },
-  { id: 'h6', emoji: '📖', name: 'Czytanie', category: 'growth' },
-  { id: 'h7', emoji: '🙏', name: 'Modlitwa', category: 'growth' },
-  { id: 'h8', emoji: '✝️', name: 'Ewangelia', category: 'growth' },
-  { id: 'h9', emoji: '💰', name: 'Krok w stronę zarobków', category: 'growth' },
-  { id: 'h10', emoji: '🚀', name: 'Praca nad side hustle', category: 'growth' },
+  { id: 'h4', emoji: '🍳', name: 'Śniadanie', category: 'health' },
+  { id: 'h5', emoji: '🏋️', name: 'Trening', category: 'health' },
+  { id: 'h6', emoji: '🚶', name: '10k kroków / rower', category: 'health' },
+  { id: 'h7', emoji: '🧠', name: 'Nauka / rozwój', category: 'growth' },
+  { id: 'h8', emoji: '📖', name: 'Czytanie', category: 'growth' },
+  { id: 'h9', emoji: '🙏', name: 'Modlitwa', category: 'growth' },
+  { id: 'h10', emoji: '✝️', name: 'Ewangelia', category: 'growth' },
+  { id: 'h11', emoji: '💰', name: 'Krok w stronę zarobków', category: 'growth' },
+  { id: 'h12', emoji: '🚀', name: 'Praca nad side hustle', category: 'growth' },
 ];
 
 function todayKey(d = new Date()) {
@@ -78,6 +80,24 @@ let data = loadData();
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
+
+function applyMigrations() {
+  if (data._routineV1) return;
+  data._routineV1 = true;
+
+  const hasByName = needle => data.habits.some(h => h.name.toLowerCase().includes(needle));
+
+  if (!hasByName('wsta')) {
+    data.habits.unshift({ id: uid(), emoji: '⏰', name: 'Wstanie przed 7', category: 'health' });
+  }
+  if (!hasByName('śniadan') && !hasByName('sniadan')) {
+    const lastHealthIdx = data.habits.map(h => habitCat(h)).lastIndexOf('health');
+    const insertAt = lastHealthIdx === -1 ? data.habits.length : lastHealthIdx + 1;
+    data.habits.splice(insertAt, 0, { id: uid(), emoji: '🍳', name: 'Śniadanie', category: 'health' });
+  }
+  save();
+}
+applyMigrations();
 
 function getDay(key) {
   if (!data.days[key]) {
