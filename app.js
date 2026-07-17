@@ -136,6 +136,11 @@ function categoryCompletion(key, cat) {
 
 let currentView = 'today';
 let weekAnchor = startOfWeek(new Date());
+let viewedDay = new Date();
+
+function viewedKey() {
+  return todayKey(viewedDay);
+}
 
 const views = {
   today: document.getElementById('view-today'),
@@ -145,8 +150,37 @@ const views = {
 };
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
+  btn.addEventListener('click', () => {
+    if (btn.dataset.view === 'today') viewedDay = new Date();
+    switchView(btn.dataset.view);
+  });
 });
+
+document.getElementById('dayPrev').addEventListener('click', () => {
+  viewedDay = addDays(viewedDay, -1);
+  render();
+});
+document.getElementById('dayNext').addEventListener('click', () => {
+  const next = addDays(viewedDay, 1);
+  if (todayKey(next) <= todayKey(new Date())) {
+    viewedDay = next;
+    render();
+  }
+});
+
+function renderDayNav() {
+  const label = document.getElementById('dayNavLabel');
+  const isToday = viewedKey() === todayKey(new Date());
+  const isYesterday = viewedKey() === todayKey(addDays(new Date(), -1));
+  let text;
+  if (isToday) text = 'DZIŚ';
+  else if (isYesterday) text = 'WCZORAJ';
+  else text = new Intl.DateTimeFormat('pl-PL', { weekday: 'short', day: 'numeric', month: 'long' }).format(viewedDay).toUpperCase();
+  label.textContent = text;
+  label.style.color = isToday ? '' : 'var(--gold-light)';
+  document.getElementById('dayNext').disabled = isToday;
+  document.getElementById('earningsCardTitle').textContent = isToday ? 'Zarobki dziś' : `Zarobki — ${text.toLowerCase()}`;
+}
 
 function switchView(name) {
   currentView = name;
@@ -174,7 +208,7 @@ function renderHeader() {
 }
 
 function renderMood() {
-  const key = todayKey();
+  const key = viewedKey();
   const day = getDay(key);
   const row = document.getElementById('moodRow');
   row.innerHTML = '';
@@ -192,7 +226,7 @@ function renderMood() {
 }
 
 function renderHabitsToday() {
-  const key = todayKey();
+  const key = viewedKey();
   const day = getDay(key);
   document.getElementById('habitEmptyHint').hidden = data.habits.length > 0;
 
@@ -230,7 +264,7 @@ function renderHabitsToday() {
 }
 
 function renderTasks() {
-  const key = todayKey();
+  const key = viewedKey();
   const day = getDay(key);
   const list = document.getElementById('taskList');
   list.innerHTML = '';
@@ -261,7 +295,7 @@ document.getElementById('taskForm').addEventListener('submit', e => {
   const input = document.getElementById('taskInput');
   const text = input.value.trim();
   if (!text) return;
-  const day = getDay(todayKey());
+  const day = getDay(viewedKey());
   day.tasks.push({ id: uid(), text, done: false });
   input.value = '';
   save();
@@ -351,7 +385,7 @@ document.getElementById('bookResetBtn').addEventListener('click', () => {
 // ---------- earnings ----------
 
 function renderEarningsInput() {
-  const day = getDay(todayKey());
+  const day = getDay(viewedKey());
   const input = document.getElementById('earningsInput');
   if (document.activeElement !== input) {
     input.value = day.earnings || '';
@@ -360,7 +394,7 @@ function renderEarningsInput() {
 
 document.getElementById('earningsInput').addEventListener('change', () => {
   const input = document.getElementById('earningsInput');
-  const day = getDay(todayKey());
+  const day = getDay(viewedKey());
   day.earnings = Math.max(0, parseInt(input.value, 10) || 0);
   save();
 });
@@ -699,6 +733,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 function render() {
   renderHeader();
   if (currentView === 'today') {
+    renderDayNav();
     renderMood();
     renderEarningsInput();
     renderHabitsToday();

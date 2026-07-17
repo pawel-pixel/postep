@@ -38,13 +38,19 @@
 
   <!-- DZIŚ -->
   <section class="view" id="view-today">
+    <div class="card week-nav">
+      <button id="dayPrev" class="icon-btn" aria-label="Poprzedni dzień">‹</button>
+      <span id="dayNavLabel" class="mono"></span>
+      <button id="dayNext" class="icon-btn" aria-label="Następny dzień">›</button>
+    </div>
+
     <div class="card">
       <h2 class="card-title">Nastrój</h2>
       <div class="mood-row" id="moodRow"></div>
     </div>
 
     <div class="card">
-      <h2 class="card-title">Zarobki dziś</h2>
+      <h2 class="card-title" id="earningsCardTitle">Zarobki dziś</h2>
       <div class="earnings-row">
         <input type="number" id="earningsInput" placeholder="0" min="0" inputmode="numeric">
         <span class="eyebrow">ZŁ</span>
