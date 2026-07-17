@@ -697,16 +697,6 @@ function render() {
 
 render();
 
-// ---------- layout ----------
-
-function syncTabbarHeight() {
-  const tb = document.querySelector('.tabbar');
-  if (tb) document.documentElement.style.setProperty('--tabbar-h', tb.offsetHeight + 'px');
-}
-syncTabbarHeight();
-window.addEventListener('resize', syncTabbarHeight);
-window.addEventListener('orientationchange', syncTabbarHeight);
-
 // ---------- service worker ----------
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
