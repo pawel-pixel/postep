@@ -181,11 +181,12 @@ function renderHabitsToday() {
     list.innerHTML = '';
     const habits = data.habits.filter(h => habitCat(h) === cat.id);
 
-    habits.forEach(h => {
+    habits.forEach((h, i) => {
       const li = document.createElement('li');
       li.className = 'habit-item';
       const done = !!day.habits[h.id];
       li.innerHTML = `
+        <span class="habit-num mono">${i + 1}</span>
         <button class="habit-check ${done ? 'done' : ''}">✓</button>
         <span class="habit-emoji">${h.emoji || '•'}</span>
         <span class="habit-name ${done ? 'done' : ''}">${escapeHtml(h.name)}</span>
@@ -493,6 +494,18 @@ function computeCurrentStreak(habitId) {
   return streak;
 }
 
+function renderMoodHistory() {
+  const el = document.getElementById('moodHistory');
+  const days = Array.from({ length: 14 }, (_, i) => addDays(new Date(), -(13 - i)));
+  el.innerHTML = days.map(d => {
+    const key = todayKey(d);
+    const day = data.days[key];
+    const hasMood = day && day.mood != null;
+    const emoji = hasMood ? MOODS[day.mood] : '·';
+    return `<div class="mood-history-item"><span class="m ${hasMood ? '' : 'none'}">${emoji}</span><span class="d mono">${d.getDate()}</span></div>`;
+  }).join('');
+}
+
 function renderStats() {
   const list = document.getElementById('streakList');
   list.innerHTML = '';
@@ -548,15 +561,38 @@ function renderStats() {
 
 // ---------- rendering: settings ----------
 
+function moveHabit(id, dir) {
+  const h = data.habits.find(x => x.id === id);
+  if (!h) return;
+  const cat = habitCat(h);
+  const sameCat = data.habits.filter(x => habitCat(x) === cat);
+  const idx = sameCat.findIndex(x => x.id === id);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= sameCat.length) return;
+  const other = sameCat[swapIdx];
+  const iA = data.habits.indexOf(h);
+  const iB = data.habits.indexOf(other);
+  data.habits[iA] = other;
+  data.habits[iB] = h;
+  save();
+  renderSettings();
+}
+
 function renderSettings() {
   const list = document.getElementById('habitEditList');
   list.innerHTML = '';
   data.habits.forEach(h => {
     const cat = habitCat(h);
+    const sameCat = data.habits.filter(x => habitCat(x) === cat);
+    const idx = sameCat.findIndex(x => x.id === h.id);
     const li = document.createElement('li');
     li.className = 'habit-edit-item';
     li.innerHTML = `
       <span class="cat-dot ${cat}" title="${cat === 'health' ? 'Zdrowie' : 'Praca i rozwój'}"></span>
+      <div class="reorder-btns">
+        <button class="reorder-btn" data-dir="-1" aria-label="Przenieś wyżej" ${idx === 0 ? 'disabled' : ''}>▲</button>
+        <button class="reorder-btn" data-dir="1" aria-label="Przenieś niżej" ${idx === sameCat.length - 1 ? 'disabled' : ''}>▼</button>
+      </div>
       <span class="habit-emoji">${h.emoji || '•'}</span>
       <input type="text" value="${escapeHtml(h.name)}" maxlength="60">
       <button class="task-del" aria-label="Usuń">×</button>
@@ -565,6 +601,9 @@ function renderSettings() {
     input.addEventListener('change', () => {
       h.name = input.value.trim() || h.name;
       save();
+    });
+    li.querySelectorAll('.reorder-btn').forEach(btn => {
+      btn.addEventListener('click', () => moveHabit(h.id, parseInt(btn.dataset.dir, 10)));
     });
     li.querySelector('.task-del').addEventListener('click', () => {
       if (!confirm(`Usunąć nawyk „${h.name}”? Historia tego nawyku zostanie zachowana, ale przestanie być śledzony.`)) return;
@@ -650,12 +689,23 @@ function render() {
     renderStats();
     renderBook();
     renderEarningsChart();
+    renderMoodHistory();
   } else if (currentView === 'settings') {
     renderSettings();
   }
 }
 
 render();
+
+// ---------- layout ----------
+
+function syncTabbarHeight() {
+  const tb = document.querySelector('.tabbar');
+  if (tb) document.documentElement.style.setProperty('--tabbar-h', tb.offsetHeight + 'px');
+}
+syncTabbarHeight();
+window.addEventListener('resize', syncTabbarHeight);
+window.addEventListener('orientationchange', syncTabbarHeight);
 
 // ---------- service worker ----------
 
